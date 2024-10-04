@@ -14,19 +14,25 @@ os.chdir(current_dir)
 root = Tk()
 root.title("FlashCard")
 
+# Zmiene interfejsu GUI
+nazwa_zestawu_var = StringVar()
+zdanie_po_polsku_var = StringVar()
+zdanie_po_angielsku_var = StringVar()
+
 
 class Flashcard():
     def __init__(self, root):
         self.kreator_interfejsu(root)
+        self.wybrany_zestaw = None
 
     def kreator_interfejsu(self, root):
         """Funkcja tworzy interfejs aplikacji"""
         root.geometry("600x400")
 
         # Zmiene interfejsu GUI
-        nazwa_zestawu_var = StringVar()
-        zdanie_po_polsku_var = StringVar()
-        zdanie_po_angielsku_var = StringVar()
+        # nazwa_zestawu_var = StringVar()
+        # zdanie_po_polsku_var = StringVar()
+        # zdanie_po_angielsku_var = StringVar()
 
         # Stylizowanie interfejsu gui
         style = Style(theme="superhero")
@@ -77,8 +83,10 @@ class Flashcard():
 
         # Combobox do wybierania istniejących zestawów kart
         zestaw_combobox = ttk.Combobox(
-            dodawanie_zdań, state="readonly", width=40)
+            dodawanie_zdań, state="readonly", width=40, values=self.pobieranie_wszystkich_zestawów())
         zestaw_combobox.pack(padx=5, pady=5)
+        zestaw_combobox.bind("<<ComboboxSelected>>",
+                             self.zapisz_wybrany_zestaw)
 
         # Pole do wprowadzania zdania po polsku
         ttk.Label(dodawanie_zdań, text="zdanie po polsku").pack(
@@ -94,7 +102,7 @@ class Flashcard():
 
         # Przycisk "zapisz"
         ttk.Button(dodawanie_zdań, text="Zapisz",
-                   command=None).pack(padx=5, pady=10)
+                   command=lambda: self.dodawanie_rekordów(self.wybrany_zestaw, zdanie_po_polsku_var, zdanie_po_angielsku_var)).pack(padx=5, pady=10)
 
     # =================================
     # Karta Wybór Zestawu
@@ -110,6 +118,8 @@ class Flashcard():
         zestaw_combobox = ttk.Combobox(
             wybór_zestawu, state="readonly", width=40, values=self.pobieranie_wszystkich_zestawów())
         zestaw_combobox.pack(padx=5, pady=5)
+        zestaw_combobox.bind("<<ComboboxSelected>>",
+                             self.zapisz_wybrany_zestaw)
 
         # Etykieta opisująca tworzenie nowego zestawu
         ttk.Label(wybór_zestawu, text="Nazwa nowego zestawu").pack(
@@ -143,17 +153,19 @@ class Flashcard():
 
             # Tworzenie poszczególnych zestawów
             cursor.execute(f"""CREATE TABLE IF NOT EXISTS {nazwa_tabeli}(
-                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                           zestaw_id INTEGER
-                          zdanie TEXT,
-                          tłumaczenie TEXT,
-                           FOREIGN KEY (zestaw_id) REFERENCES zestawy_fiszek(id) )""")
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        zestaw_id INTEGER,
+                        zdanie TEXT,
+                        tłumaczenie TEXT,
+                        FOREIGN KEY (zestaw_id) REFERENCES zestawy_fiszek(id) )""")
 
     def dodawanie_rekordów(self, nazwa_tabeli, zdanie, tłumaczenie):
         with sqlite3.connect("flashcard.db") as connection:
             cursor = connection.cursor()
+            zdanie_value = zdanie.get()
+            tłumaczenie_value = tłumaczenie.get()
             cursor.execute(
-                f"""INSERT INTO {nazwa_tabeli} (zdanie, tłumaczenie) VALUES (?, ?) """, (zdanie, tłumaczenie))
+                f"""INSERT INTO {nazwa_tabeli} (zdanie, tłumaczenie) VALUES (?, ?) """, (zdanie_value, tłumaczenie_value))
 
     # Funkcja pobierania nazw wszystkich zestawów kart flash z bazy danych
     def pobieranie_wszystkich_zestawów(self):
@@ -164,8 +176,12 @@ class Flashcard():
             zestawy = [row[1] for row in rows]
         return zestawy
 
+    # Zapisuje wybrazy zestaw do nauki
+    def zapisz_wybrany_zestaw(self, event):
+        combobox = event.widget
+        self.wybrany_zestaw = str(combobox.get())
+
 
 app = Flashcard(root)
-
-print(app.pobieranie_wszystkich_zestawów())
+app.kreator_tabeli("szkoła")
 root.mainloop()
