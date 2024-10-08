@@ -3,7 +3,7 @@ from tkinter import ttk
 from ttkbootstrap import Style
 
 
-def kreator_interfejsu(root):
+def kreator_interfejsu(self, root):
     """Funkcja tworzy interfejs aplikacji"""
     root.geometry("600x400")
 
@@ -48,7 +48,6 @@ def kreator_interfejsu(root):
     ttk.Button(tryb_nauki, text="Następny", command=None).pack(
         padx=20, pady=5, side="right")
 
-
 # ============================
 # Karta Dodawanie Zdań
 # ============================
@@ -61,11 +60,15 @@ def kreator_interfejsu(root):
     ttk.Label(dodawanie_zdań, text="Wybierz zestaw").pack(padx=5, pady=5)
 
     # Combobox do wybierania istniejących zestawów kart
-    zestaw_combobox = ttk.Combobox(dodawanie_zdań, state="readonly", width=40)
+    zestaw_combobox = ttk.Combobox(
+        dodawanie_zdań, state="readonly", width=40, values=self.pobierz_wszystkie_zestawy())
     zestaw_combobox.pack(padx=5, pady=5)
+    zestaw_combobox.bind("<<ComboboxSelected>>",
+                         self.zapisz_wybrany_zestaw)
 
     # Pole do wprowadzania zdania po polsku
-    ttk.Label(dodawanie_zdań, text="zdanie po polsku").pack(padx=5, pady=10)
+    ttk.Label(dodawanie_zdań, text="zdanie po polsku").pack(
+        padx=5, pady=10)
     ttk.Entry(dodawanie_zdań, textvariable=zdanie_po_polsku_var,
               width=45).pack(padx=5, pady=5)
 
@@ -77,7 +80,7 @@ def kreator_interfejsu(root):
 
     # Przycisk "zapisz"
     ttk.Button(dodawanie_zdań, text="Zapisz",
-               command=None).pack(padx=5, pady=10)
+               command=lambda: self.dodawanie_rekordów(self.wybrany_zestaw, zdanie_po_polsku_var, zdanie_po_angielsku_var)).pack(padx=5, pady=10)
 
 # =================================
 # Karta Wybór Zestawu
@@ -90,8 +93,11 @@ def kreator_interfejsu(root):
     ttk.Label(wybór_zestawu, text="Wybierz zestaw").pack(padx=5, pady=5)
 
     # Combobox do wybierania istniejących zestawów kart
-    zestaw_combobox = ttk.Combobox(wybór_zestawu, state="readonly", width=40)
+    zestaw_combobox = ttk.Combobox(
+        wybór_zestawu, state="readonly", width=40, values=self.pobierz_wszystkie_zestawy())
     zestaw_combobox.pack(padx=5, pady=5)
+    zestaw_combobox.bind("<<ComboboxSelected>>",
+                         self.zapisz_wybrany_zestaw)
 
     # Etykieta opisująca tworzenie nowego zestawu
     ttk.Label(wybór_zestawu, text="Nazwa nowego zestawu").pack(
@@ -101,4 +107,5 @@ def kreator_interfejsu(root):
 
     # Przycisk "utwórz zestaw"
     ttk.Button(wybór_zestawu, text="Zapisz",
-               command=None).pack(padx=5, pady=5)
+               command=lambda: self.kreator_tabeli(
+                   nazwa_zestawu_var.get())).pack(padx=5, pady=5)
